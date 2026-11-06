@@ -42,6 +42,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -250,17 +251,31 @@ private fun PmsLibraryScreen(
     var librarySection by remember { mutableStateOf("MENU") }
     var searchQuery by remember { mutableStateOf("") }
     var showPlayerDetails by remember { mutableStateOf(false) }
+    val tabHistory = remember { mutableStateListOf<String>() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val player = remember { ExoPlayer.Builder(context).build() }
 
-    BackHandler {
+    BackHandler(enabled = showPlayerDetails || selectedAlbum != null || librarySection != "MENU" || tabHistory.isNotEmpty()) {
         when {
             showPlayerDetails -> showPlayerDetails = false
             selectedAlbum != null -> selectedAlbum = null
-            mainTab != "RADIO" -> mainTab = "RADIO"
-            else -> onDisconnect()
+            librarySection != "MENU" -> librarySection = "MENU"
+            tabHistory.isNotEmpty() -> {
+                mainTab = tabHistory.removeAt(tabHistory.lastIndex)
+                selectedAlbum = null
+            }
         }
+    }
+
+    fun navigateToTab(tab: String) {
+        if (mainTab != tab) {
+            tabHistory.add(mainTab)
+            mainTab = tab
+        }
+        selectedAlbum = null
+        showPlayerDetails = false
+        if (tab == "LIBRARY") librarySection = "MENU"
     }
 
     DisposableEffect(player) {
@@ -335,7 +350,7 @@ private fun PmsLibraryScreen(
 
     Surface(Modifier.fillMaxSize(), color = PmsBlack) {
         Column(
-            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(horizontal = 18.dp, vertical = 14.dp)
+            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(horizontal = 22.dp, vertical = 18.dp)
         ) {
             IndustrialHeader(onSettings = onDisconnect)
             Spacer(Modifier.height(22.dp))
@@ -380,19 +395,19 @@ private fun PmsLibraryScreen(
                 else -> when (mainTab) {
                     "RADIO" -> {
                         ScreenHeading("RADIO PMS", "24/7 SHUFFLE STREAM")
-                        Spacer(Modifier.height(28.dp))
-                        SpectrumBars(isPlaying, Modifier.fillMaxWidth().height(105.dp))
-                        Spacer(Modifier.height(26.dp))
-                        Column(Modifier.fillMaxWidth().border(1.dp, Color(0xFF34383A), RoundedCornerShape(5.dp)).padding(17.dp)) {
+                        Spacer(Modifier.height(36.dp))
+                        SpectrumBars(isPlaying, Modifier.fillMaxWidth().height(155.dp))
+                        Spacer(Modifier.weight(1f))
+                        Column(Modifier.fillMaxWidth().border(1.dp, Color(0xFF34383A), RoundedCornerShape(5.dp)).padding(23.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("NOW PLAYING", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
-                                Text("SHUFFLE", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.sp)
+                                Text("NOW PLAYING", color = PmsMuted, fontSize = 11.sp, letterSpacing = 1.8.sp)
+                                Text("SHUFFLE", color = PmsMuted, fontSize = 11.sp, letterSpacing = 1.4.sp)
                             }
-                            Spacer(Modifier.height(17.dp))
-                            Text(currentTrack?.title ?: "PMS RADIO", color = PmsText, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.height(4.dp))
-                            Text(currentTrack?.artist ?: "READY FOR TRANSMISSION", color = PmsMuted, fontSize = 10.sp, letterSpacing = 1.sp)
-                            Spacer(Modifier.height(20.dp))
+                            Spacer(Modifier.height(22.dp))
+                            Text(currentTrack?.title ?: "PMS RADIO", color = PmsText, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(6.dp))
+                            Text(currentTrack?.artist ?: "READY FOR TRANSMISSION", color = PmsMuted, fontSize = 13.sp, letterSpacing = 1.2.sp)
+                            Spacer(Modifier.height(25.dp))
                             PlayerControls(isPlaying, { startTrack(currentTrackIndex - 1) }, { if (player.isPlaying) player.pause() else player.play() }, { startTrack(currentTrackIndex + 1) })
                             if (previewMode) {
                                 Spacer(Modifier.height(10.dp))
@@ -414,10 +429,10 @@ private fun PmsLibraryScreen(
                                 Triple("RECENTLY PLAYED", "—", "◷")
                             ).forEach { section ->
                                 Row(Modifier.fillMaxWidth().border(1.dp, Color(0xFF303436), RoundedCornerShape(2.dp))
-                                    .clickable { librarySection = section.first }.padding(horizontal = 14.dp, vertical = 15.dp),
+                                    .clickable { librarySection = section.first }.padding(horizontal = 18.dp, vertical = 21.dp),
                                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                    Text(section.third, color = PmsMuted, fontSize = 21.sp, modifier = Modifier.width(48.dp))
-                                    Text(section.first, color = PmsText, fontSize = 13.sp, letterSpacing = 0.8.sp,
+                                    Text(section.third, color = PmsMuted, fontSize = 26.sp, modifier = Modifier.width(52.dp))
+                                    Text(section.first, color = PmsText, fontSize = 16.sp, letterSpacing = 1.sp,
                                         modifier = Modifier.weight(1f))
                                     Text("( ${section.second} )   ›", color = PmsMuted, fontSize = 10.sp)
                                 }
@@ -453,7 +468,7 @@ private fun PmsLibraryScreen(
                                 }
                                 "ARTISTS" -> LazyColumn {
                                     items(artists) { artist ->
-                                        Column(Modifier.fillMaxWidth().clickable { searchQuery = artist; mainTab = "SEARCH" }.padding(vertical = 15.dp)) {
+                                        Column(Modifier.fillMaxWidth().clickable { searchQuery = artist; navigateToTab("SEARCH") }.padding(vertical = 18.dp)) {
                                             Text(artist, color = PmsText, fontSize = 14.sp)
                                             Text(albums.count { it.artist == artist }.toString() + " ALBUMS", color = PmsMuted, fontSize = 9.sp)
                                         }
@@ -479,7 +494,7 @@ private fun PmsLibraryScreen(
                             LazyColumn {
                                 items(filteredAlbums, key = { it.id }) { album ->
                                     Column(Modifier.fillMaxWidth().clickable {
-                                        mainTab = "LIBRARY"; librarySection = "ALBUMS"; openAlbum(album)
+                                        navigateToTab("LIBRARY"); librarySection = "ALBUMS"; openAlbum(album)
                                     }.padding(vertical = 14.dp)) {
                                         Text(album.name, color = PmsText, fontSize = 14.sp)
                                         Text(album.artist, color = PmsMuted, fontSize = 10.sp)
@@ -492,7 +507,7 @@ private fun PmsLibraryScreen(
                 }
             }
 
-            Spacer(Modifier.weight(1f, fill = false))
+            Spacer(Modifier.weight(1f))
             if (currentTrack != null && !previewMode && !showPlayerDetails) {
                 Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth().border(1.dp, Color(0xFF34383A), RoundedCornerShape(5.dp))
@@ -510,16 +525,13 @@ private fun PmsLibraryScreen(
             }
             Spacer(Modifier.height(12.dp))
             PmsDivider()
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceAround) {
+            Row(Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp), horizontalArrangement = Arrangement.SpaceAround) {
                 listOf("RADIO", "LIBRARY", "SEARCH").forEach { tab ->
                     Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable {
-                            mainTab = tab; selectedAlbum = null; showPlayerDetails = false
-                            if (tab == "LIBRARY") librarySection = "MENU"
-                        }.padding(horizontal = 13.dp, vertical = 4.dp)) {
+                        modifier = Modifier.clickable { navigateToTab(tab) }.padding(horizontal = 18.dp, vertical = 8.dp)) {
                         Text(when (tab) { "RADIO" -> "◉"; "LIBRARY" -> "▱"; else -> "⌕" },
-                            color = if (mainTab == tab) PmsText else PmsMuted, fontSize = 20.sp)
-                        Text(tab, color = if (mainTab == tab) PmsText else PmsMuted, fontSize = 8.sp, letterSpacing = 1.sp)
+                            color = if (mainTab == tab) PmsText else PmsMuted, fontSize = 27.sp)
+                        Text(tab, color = if (mainTab == tab) PmsText else PmsMuted, fontSize = 10.sp, letterSpacing = 1.2.sp)
                     }
                 }
             }
@@ -529,17 +541,18 @@ private fun PmsLibraryScreen(
 
 @Composable
 private fun IndustrialHeader(onSettings: () -> Unit) {
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center) {
-            Text("≪", color = PmsMuted, fontSize = 28.sp, modifier = Modifier.padding(end = 5.dp))
-            Text("PMS", color = PmsText, fontSize = 39.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
-            Text("≫", color = PmsMuted, fontSize = 28.sp, modifier = Modifier.padding(start = 5.dp))
+    Column(Modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().height(58.dp)) {
+            Row(Modifier.align(androidx.compose.ui.Alignment.Center), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text("≪", color = PmsMuted, fontSize = 31.sp, modifier = Modifier.padding(end = 6.dp))
+                Text("PMS", color = PmsText, fontSize = 46.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
+                Text("≫", color = PmsMuted, fontSize = 31.sp, modifier = Modifier.padding(start = 6.dp))
+            }
+            Text("⚙", color = PmsMuted, fontSize = 25.sp,
+                modifier = Modifier.align(androidx.compose.ui.Alignment.CenterEnd).clickable(onClick = onSettings).padding(5.dp))
         }
-        Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 8.sp, letterSpacing = 2.1.sp)
-        Text("⚙", color = PmsMuted, fontSize = 19.sp,
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onSettings).padding(top = 2.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.End)
+        Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 10.sp, letterSpacing = 2.5.sp,
+            modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 
@@ -547,12 +560,12 @@ private fun IndustrialHeader(onSettings: () -> Unit) {
 private fun ScreenHeading(title: String, subtitle: String) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text("////", color = PmsMuted, fontSize = 13.sp, letterSpacing = 1.sp)
-            Text("  $title  ", color = PmsText, fontSize = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            Text("////", color = PmsMuted, fontSize = 13.sp, letterSpacing = 1.sp)
+            Text("////", color = PmsMuted, fontSize = 17.sp, letterSpacing = 1.sp)
+            Text("  $title  ", color = PmsText, fontSize = 25.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.4.sp)
+            Text("////", color = PmsMuted, fontSize = 17.sp, letterSpacing = 1.sp)
         }
         Spacer(Modifier.height(7.dp))
-        Text("[  $subtitle  ]", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
+        Text("[  $subtitle  ]", color = PmsMuted, fontSize = 11.sp, letterSpacing = 1.8.sp)
     }
 }
 
@@ -565,7 +578,7 @@ private fun PmsDivider() {
 private fun PlayerControls(isPlaying: Boolean, onPrevious: () -> Unit, onToggle: () -> Unit, onNext: () -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Text("PREV", color = PmsMuted, fontSize = 9.sp, modifier = Modifier.clickable(onClick = onPrevious).padding(12.dp))
-        Text(if (isPlaying) "Ⅱ" else "▶", color = PmsText, fontSize = 27.sp,
+        Text(if (isPlaying) "Ⅱ" else "▶", color = PmsText, fontSize = 34.sp,
             modifier = Modifier.clickable(onClick = onToggle).padding(horizontal = 24.dp, vertical = 4.dp))
         Text("NEXT", color = PmsMuted, fontSize = 9.sp, modifier = Modifier.clickable(onClick = onNext).padding(12.dp))
     }
@@ -584,7 +597,7 @@ private fun SpectrumBars(isPlaying: Boolean, modifier: Modifier = Modifier) {
             val wave = abs(sin(phase + index * 0.58f))
             val envelope = 0.25f + abs(sin(index * 0.31f)) * 0.75f
             val barHeight = if (isPlaying) 9f + wave * envelope * 76f else 8f + envelope * 12f
-            Box(Modifier.padding(horizontal = 2.dp).width(4.dp).height(barHeight.dp)
+            Box(Modifier.padding(horizontal = 2.dp).width(5.dp).height(barHeight.dp)
                 .background(Color(0xFF9EA4A7), RoundedCornerShape(1.dp)))
         }
     }
