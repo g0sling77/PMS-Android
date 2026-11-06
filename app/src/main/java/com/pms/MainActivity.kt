@@ -65,11 +65,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val PmsBlack = Color(0xFF101113)
-private val PmsPanel = Color(0xFF1B1D20)
+private val PmsBlack = Color(0xFF080909)
+private val PmsPanel = Color(0xFF121415)
 private val PmsText = Color(0xFFE8E8E8)
-private val PmsMuted = Color(0xFF85888D)
-private val PmsAccent = Color(0xFFD34A43)
+private val PmsMuted = Color(0xFF92979A)
+private val PmsAccent = Color(0xFFB7BEC1)
 private val PmsSuccess = Color(0xFF9BC7A5)
 private val PmsError = Color(0xFFE07B70)
 
@@ -337,14 +337,7 @@ private fun PmsLibraryScreen(
         Column(
             Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column {
-                    Text("PMS", color = PmsText, fontSize = 29.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-                    Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 8.sp, letterSpacing = 1.8.sp)
-                }
-                Text("SETTINGS", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.sp,
-                    modifier = Modifier.clickable(onClick = onDisconnect).padding(8.dp))
-            }
+            IndustrialHeader(onSettings = onDisconnect)
             Spacer(Modifier.height(22.dp))
 
             when {
@@ -412,18 +405,22 @@ private fun PmsLibraryScreen(
                             ScreenHeading("LIBRARY", "YOUR MUSIC COLLECTION")
                             Spacer(Modifier.height(18.dp))
                             listOf(
-                                Triple("ALBUMS", albums.size.toString(), "DISC"),
-                                Triple("ARTISTS", artists.size.toString(), "USER"),
-                                Triple("GENRES", "—", "WAVE"),
-                                Triple("TRACKS", "—", "NOTE")
+                                Triple("ALBUMS", albums.size.toString(), "◉"),
+                                Triple("ARTISTS", artists.size.toString(), "♟"),
+                                Triple("GENRES", "18", "≋"),
+                                Triple("TRACKS", "—", "♫"),
+                                Triple("PLAYLISTS", "—", "☷"),
+                                Triple("FAVORITES", "—", "☆"),
+                                Triple("RECENTLY PLAYED", "—", "◷")
                             ).forEach { section ->
-                                Row(Modifier.fillMaxWidth().clickable { librarySection = section.first }.padding(vertical = 17.dp),
+                                Row(Modifier.fillMaxWidth().border(1.dp, Color(0xFF303436), RoundedCornerShape(2.dp))
+                                    .clickable { librarySection = section.first }.padding(horizontal = 14.dp, vertical = 15.dp),
                                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                    Text(section.third, color = PmsMuted, fontSize = 9.sp, modifier = Modifier.width(54.dp))
-                                    Text(section.first, color = PmsText, fontSize = 14.sp, modifier = Modifier.weight(1f))
-                                    Text(section.second + "  ›", color = PmsMuted, fontSize = 10.sp)
+                                    Text(section.third, color = PmsMuted, fontSize = 21.sp, modifier = Modifier.width(48.dp))
+                                    Text(section.first, color = PmsText, fontSize = 13.sp, letterSpacing = 0.8.sp,
+                                        modifier = Modifier.weight(1f))
+                                    Text("( ${section.second} )   ›", color = PmsMuted, fontSize = 10.sp)
                                 }
-                                PmsDivider()
                             }
                         } else {
                             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -531,11 +528,31 @@ private fun PmsLibraryScreen(
 }
 
 @Composable
+private fun IndustrialHeader(onSettings: () -> Unit) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center) {
+            Text("≪", color = PmsMuted, fontSize = 28.sp, modifier = Modifier.padding(end = 5.dp))
+            Text("PMS", color = PmsText, fontSize = 39.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
+            Text("≫", color = PmsMuted, fontSize = 28.sp, modifier = Modifier.padding(start = 5.dp))
+        }
+        Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 8.sp, letterSpacing = 2.1.sp)
+        Text("⚙", color = PmsMuted, fontSize = 19.sp,
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onSettings).padding(top = 2.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.End)
+    }
+}
+
+@Composable
 private fun ScreenHeading(title: String, subtitle: String) {
-    Column {
-        Text(title, color = PmsText, fontSize = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-        Spacer(Modifier.height(4.dp))
-        Text(subtitle, color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Text("////", color = PmsMuted, fontSize = 13.sp, letterSpacing = 1.sp)
+            Text("  $title  ", color = PmsText, fontSize = 20.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+            Text("////", color = PmsMuted, fontSize = 13.sp, letterSpacing = 1.sp)
+        }
+        Spacer(Modifier.height(7.dp))
+        Text("[  $subtitle  ]", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.5.sp)
     }
 }
 
