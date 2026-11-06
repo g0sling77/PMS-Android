@@ -53,9 +53,9 @@ private val PmsBlack = Color(0xFF101113)
 private val PmsPanel = Color(0xFF1B1D20)
 private val PmsText = Color(0xFFE8E8E8)
 private val PmsMuted = Color(0xFF85888D)
-private val PmsAccent = Color(0xFFB7A0E8)
+private val PmsAccent = Color(0xFFD34A43)
 private val PmsSuccess = Color(0xFF9BC7A5)
-private val PmsError = Color(0xFFE28B8B)
+private val PmsError = Color(0xFFE07B70)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,21 +104,21 @@ private fun PmsConnectScreen() {
         ) {
             Text("PMS", color = PmsText, fontSize = 30.sp, fontWeight = FontWeight.Bold, letterSpacing = 3.sp)
             Spacer(Modifier.height(5.dp))
-            Text("PERSONAL MUSIC STREAMING", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.7.sp)
+            Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.7.sp)
             Spacer(Modifier.height(54.dp))
             Text("CONNECT SERVER", color = PmsAccent, fontSize = 11.sp, letterSpacing = 2.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(10.dp))
-            Text("Your music. Your server.", color = PmsText, fontSize = 25.sp, fontWeight = FontWeight.Medium)
+            Text("LOUDER. CLOSER. YOURS.", color = PmsText, fontSize = 25.sp, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(9.dp))
-            Text("Enter the address of your PMS music server.", color = PmsMuted, fontSize = 13.sp)
+            Text("Connect to your rock and metal library.", color = PmsMuted, fontSize = 13.sp)
             Spacer(Modifier.height(30.dp))
-            FieldLabel("SERVER ADDRESS")
+            FieldLabel("SERVER IP")
             OutlinedTextField(
                 value = serverAddress,
                 onValueChange = { serverAddress = it; statusMessage = null; connectionSucceeded = false },
                 modifier = Modifier.fillMaxWidth(), singleLine = true,
-                placeholder = { Text("http://192.168.1.10:4533") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
+                placeholder = { Text("192.168.1.10") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
             Spacer(Modifier.height(17.dp))
             FieldLabel("USERNAME")
@@ -191,7 +191,7 @@ private fun PmsConnectScreen() {
             Spacer(Modifier.weight(1f))
             Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF303236)))
             Spacer(Modifier.height(14.dp))
-            Text("OPEN SOURCE  •  NO SUBSCRIPTION", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.sp)
+            Text("ROCK & METAL  •  NO SUBSCRIPTION", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.sp)
         }
     }
 }
@@ -236,7 +236,7 @@ private fun PmsLibraryScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text("PMS", color = PmsText, fontSize = 27.sp, fontWeight = FontWeight.Bold, letterSpacing = 3.sp)
-                    Text("YOUR MUSIC LIBRARY", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.6.sp)
+                    Text("ROCK · METAL · ALTERNATIVE", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.6.sp)
                 }
                 Text(
                     "DISCONNECT", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.sp,
@@ -318,7 +318,7 @@ private fun PmsLibraryScreen(
                 }
             }
             Spacer(Modifier.weight(1f))
-            Text("PMS  /  NAVIDROME", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
+            Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
         }
     }
 }
