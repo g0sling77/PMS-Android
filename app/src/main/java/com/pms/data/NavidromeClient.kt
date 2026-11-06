@@ -28,6 +28,11 @@ data class MusicTrack(
     val durationSeconds: Int
 )
 
+data class RadioStation(
+    val id: String,
+    val name: String
+)
+
 object NavidromeClient {
     private const val API_VERSION = "1.16.1"
     private const val DEFAULT_PORT = 4533
@@ -65,6 +70,41 @@ object NavidromeClient {
             serverName = "Navidrome / Subsonic",
             version = response.optString("version", "не указана")
         )
+    }
+
+    fun getRadioStations(serverAddress: String, username: String, password: String): List<RadioStation> {
+        val response = request(serverAddress, username, password, "getMusicFolders.view")
+        val folders = response.optJSONObject("musicFolders")
+            ?: throw IllegalStateException("Navidrome не вернул список радиобиблиотек")
+        return jsonObjects(folders.opt("musicFolder")).mapNotNull { item ->
+            val id = item.optString("id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            val name = item.optString("name").trim()
+            if (name.isBlank()) null else RadioStation(id, name)
+        }
+    }
+
+    fun getRandomRadioTracks(
+        serverAddress: String,
+        username: String,
+        password: String,
+        musicFolderId: String,
+        size: Int = 500
+    ): List<MusicTrack> {
+        val response = request(
+            serverAddress, username, password, "getRandomSongs.view",
+            mapOf("size" to size.coerceIn(1, 500).toString(), "musicFolderId" to musicFolderId)
+        )
+        val songs = response.optJSONObject("randomSongs")
+            ?: throw IllegalStateException("Радиостанция пока не содержит музыки")
+        return jsonObjects(songs.opt("song")).mapNotNull { item ->
+            val id = item.optString("id").takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            MusicTrack(
+                id = id,
+                title = item.optString("title", "Unknown track"),
+                artist = item.optString("artist", "Unknown artist"),
+                durationSeconds = item.optInt("duration")
+            )
+        }
     }
 
     fun getAlbums(serverAddress: String, username: String, password: String): List<MusicAlbum> {
