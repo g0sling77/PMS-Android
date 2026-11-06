@@ -428,7 +428,7 @@ private fun PmsLibraryScreen(
                         } else {
                             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                                 Text("‹ MENU", color = PmsMuted, fontSize = 9.sp,
-                                    modifier = Modifier.clickable { librarySection = "MENU" }.padding(end = 14.dp, vertical = 8.dp))
+                                    modifier = Modifier.clickable { librarySection = "MENU" }.padding(end = 14.dp, top = 8.dp, bottom = 8.dp))
                                 Text(librarySection, color = PmsText, fontSize = 17.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                             }
                             Spacer(Modifier.height(14.dp))
