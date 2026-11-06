@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -46,6 +48,9 @@ import androidx.compose.ui.unit.sp
 import com.pms.data.MusicAlbum
 import com.pms.data.MusicTrack
 import com.pms.data.NavidromeClient
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -230,6 +235,15 @@ private fun PmsLibraryScreen(
     var albums by remember { mutableStateOf(if (previewMode) demoAlbums else emptyList()) }
     var selectedAlbum by remember { mutableStateOf<MusicAlbum?>(null) }
     var tracks by remember { mutableStateOf<List<MusicTrack>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(!previewMode) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var currentTrack by remember { mutableStateOf<MusicTrack?>(null) }
+    var currentTrackIndex by remember { mutableStateOf(-1) }
+    var isPlaying by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val player = remember { ExoPlayer.Builder(context).build() }
+
     BackHandler {
         if (selectedAlbum != null) {
             selectedAlbum = null
@@ -238,9 +252,40 @@ private fun PmsLibraryScreen(
             onDisconnect()
         }
     }
-    var isLoading by remember { mutableStateOf(!previewMode) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
+
+    DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(playing: Boolean) {
+                isPlaying = playing
+            }
+
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                errorMessage = error.message ?: "Не удалось воспроизвести трек"
+                isPlaying = false
+            }
+        }
+        player.addListener(listener)
+        onDispose {
+            player.removeListener(listener)
+            player.release()
+        }
+    }
+
+    fun startTrack(index: Int) {
+        if (previewMode) return
+        val track = tracks.getOrNull(index) ?: return
+        try {
+            val streamUrl = NavidromeClient.getStreamUrl(serverAddress, username, password, track.id)
+            currentTrackIndex = index
+            currentTrack = track
+            player.setMediaItem(MediaItem.fromUri(streamUrl))
+            player.prepare()
+            player.play()
+            errorMessage = null
+        } catch (error: Exception) {
+            errorMessage = error.message ?: "Не удалось запустить воспроизведение"
+        }
+    }
 
     fun loadAlbums() {
         scope.launch {
@@ -355,11 +400,17 @@ private fun PmsLibraryScreen(
                     else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                         items(tracks, key = { it.id }) { track ->
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+                                modifier = Modifier.fillMaxWidth()
+                                    .clickable { startTrack(tracks.indexOf(track)) }
+                                    .padding(vertical = 14.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(track.title, color = PmsText, fontSize = 14.sp)
+                                    Text(
+                                        if (currentTrack?.id == track.id) "▶  ${track.title}" else track.title,
+                                        color = if (currentTrack?.id == track.id) PmsAccent else PmsText,
+                                        fontSize = 14.sp
+                                    )
                                     Text(track.artist, color = PmsMuted, fontSize = 11.sp)
                                 }
                                 Text(formatDuration(track.durationSeconds), color = PmsMuted, fontSize = 11.sp)
@@ -370,6 +421,43 @@ private fun PmsLibraryScreen(
                 }
             }
             Spacer(Modifier.weight(1f))
+            if (currentTrack != null && !previewMode) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(PmsPanel, RoundedCornerShape(8.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                ) {
+                    Text("NOW PLAYING", color = PmsAccent, fontSize = 8.sp, letterSpacing = 1.6.sp)
+                    Spacer(Modifier.height(5.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(currentTrack!!.title, color = PmsText, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                            Text(currentTrack!!.artist, color = PmsMuted, fontSize = 10.sp)
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+                            Text(
+                                "PREV", color = PmsText, fontSize = 9.sp,
+                                modifier = Modifier.clickable { startTrack(currentTrackIndex - 1) }.padding(6.dp)
+                            )
+                            Text(
+                                if (isPlaying) "PAUSE" else "PLAY",
+                                color = PmsAccent, fontSize = 9.sp,
+                                modifier = Modifier.clickable {
+                                    if (player.isPlaying) player.pause() else player.play()
+                                }.padding(6.dp)
+                            )
+                            Text(
+                                "NEXT", color = PmsText, fontSize = 9.sp,
+                                modifier = Modifier.clickable { startTrack(currentTrackIndex + 1) }.padding(6.dp)
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+            }
             Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.2.sp)
         }
     }
