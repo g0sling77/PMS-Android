@@ -86,6 +86,27 @@ object NavidromeClient {
         }
     }
 
+    fun getStreamUrl(serverAddress: String, username: String, password: String, trackId: String): String {
+        val base = normalizeServerAddress(serverAddress)
+        require(username.isNotBlank()) { "Введите имя пользователя" }
+        require(password.isNotEmpty()) { "Введите пароль" }
+        val salt = randomSalt()
+        val token = md5(password + salt)
+        val endpoint = if (base.endsWith("/rest")) "$base/stream.view" else "$base/rest/stream.view"
+        val parameters = linkedMapOf(
+            "u" to username,
+            "t" to token,
+            "s" to salt,
+            "v" to API_VERSION,
+            "c" to "PMS",
+            "id" to trackId
+        )
+        val query = parameters.entries.joinToString("&") { (key, value) ->
+            "${encode(key)}=${encode(value)}"
+        }
+        return "$endpoint?$query"
+    }
+
     fun getAlbum(serverAddress: String, username: String, password: String, albumId: String): List<MusicTrack> {
         val response = request(
             serverAddress, username, password, "getAlbum.view",
