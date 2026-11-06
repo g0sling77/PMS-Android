@@ -2,6 +2,7 @@ package com.pms
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -229,6 +230,14 @@ private fun PmsLibraryScreen(
     var albums by remember { mutableStateOf(if (previewMode) demoAlbums else emptyList()) }
     var selectedAlbum by remember { mutableStateOf<MusicAlbum?>(null) }
     var tracks by remember { mutableStateOf<List<MusicTrack>>(emptyList()) }
+    BackHandler {
+        if (selectedAlbum != null) {
+            selectedAlbum = null
+            errorMessage = null
+        } else {
+            onDisconnect()
+        }
+    }
     var isLoading by remember { mutableStateOf(!previewMode) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
