@@ -84,6 +84,7 @@ private fun PmsConnectScreen() {
     var statusMessage by remember { mutableStateOf<String?>(null) }
     var connectionSucceeded by remember { mutableStateOf(false) }
     var showLibrary by remember { mutableStateOf(false) }
+    var previewMode by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     if (showLibrary) {
@@ -91,7 +92,8 @@ private fun PmsConnectScreen() {
             serverAddress = serverAddress,
             username = username,
             password = password,
-            onDisconnect = { showLibrary = false }
+            previewMode = previewMode,
+            onDisconnect = { showLibrary = false; previewMode = false }
         )
         return
     }
@@ -175,11 +177,23 @@ private fun PmsConnectScreen() {
             if (connectionSucceeded) {
                 Spacer(Modifier.height(12.dp))
                 Button(
-                    onClick = { showLibrary = true },
+                    onClick = { previewMode = false; showLibrary = true },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = PmsPanel, contentColor = PmsAccent)
                 ) { Text("OPEN MUSIC LIBRARY", fontSize = 11.sp, letterSpacing = 1.4.sp) }
+            }
+            Spacer(Modifier.height(14.dp))
+            Button(
+                onClick = { previewMode = true; showLibrary = true },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PmsPanel,
+                    contentColor = PmsText
+                )
+            ) {
+                Text("ADMIN  /  DESIGN PREVIEW", fontSize = 10.sp, letterSpacing = 1.4.sp)
             }
             Spacer(Modifier.height(20.dp))
             Box(Modifier.fillMaxWidth().background(PmsPanel, RoundedCornerShape(6.dp)).padding(14.dp)) {
@@ -201,12 +215,21 @@ private fun PmsLibraryScreen(
     serverAddress: String,
     username: String,
     password: String,
+    previewMode: Boolean,
     onDisconnect: () -> Unit
 ) {
-    var albums by remember { mutableStateOf<List<MusicAlbum>>(emptyList()) }
+    val demoAlbums = remember {
+        listOf(
+            MusicAlbum("demo-1", "Ashes & Iron", "PMS Demo", 2024, 9),
+            MusicAlbum("demo-2", "Black Horizon", "The Hollow Signal", 2022, 11),
+            MusicAlbum("demo-3", "Static Ritual", "Northern Collapse", 2025, 8),
+            MusicAlbum("demo-4", "No Light Remains", "PMS Demo", 2021, 10)
+        )
+    }
+    var albums by remember { mutableStateOf(if (previewMode) demoAlbums else emptyList()) }
     var selectedAlbum by remember { mutableStateOf<MusicAlbum?>(null) }
     var tracks by remember { mutableStateOf<List<MusicTrack>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(!previewMode) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -226,7 +249,14 @@ private fun PmsLibraryScreen(
         }
     }
 
-    LaunchedEffect(serverAddress, username) { loadAlbums() }
+    LaunchedEffect(serverAddress, username, previewMode) {
+        if (previewMode) {
+            albums = demoAlbums
+            isLoading = false
+        } else {
+            loadAlbums()
+        }
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = PmsBlack) {
         Column(
@@ -237,6 +267,9 @@ private fun PmsLibraryScreen(
                 Column {
                     Text("PMS", color = PmsText, fontSize = 27.sp, fontWeight = FontWeight.Bold, letterSpacing = 3.sp)
                     Text("ROCK · METAL · ALTERNATIVE", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.6.sp)
+                    if (previewMode) {
+                        Text("ADMIN PREVIEW · DEMO DATA", color = PmsAccent, fontSize = 8.sp, letterSpacing = 1.3.sp)
+                    }
                 }
                 Text(
                     "DISCONNECT", color = PmsMuted, fontSize = 9.sp, letterSpacing = 1.sp,
@@ -260,17 +293,27 @@ private fun PmsLibraryScreen(
                             Column(
                                 modifier = Modifier.fillMaxWidth().clickable {
                                     selectedAlbum = album
-                                    isLoading = true
                                     errorMessage = null
-                                    scope.launch {
-                                        try {
-                                            tracks = withContext(Dispatchers.IO) {
-                                                NavidromeClient.getAlbum(serverAddress, username, password, album.id)
+                                    if (previewMode) {
+                                        isLoading = false
+                                        tracks = listOf(
+                                            MusicTrack("demo-${album.id}-1", "Opening Signal", album.artist, 238),
+                                            MusicTrack("demo-${album.id}-2", "Concrete Sky", album.artist,  214),
+                                            MusicTrack("demo-${album.id}-3", "Burn the Silence", album.artist, 267),
+                                            MusicTrack("demo-${album.id}-4", "After the Fallout", album.artist, 301)
+                                        ).take(if (album.songCount < 5) album.songCount else 4)
+                                    } else {
+                                        isLoading = true
+                                        scope.launch {
+                                            try {
+                                                tracks = withContext(Dispatchers.IO) {
+                                                    NavidromeClient.getAlbum(serverAddress, username, password, album.id)
+                                                }
+                                            } catch (error: Exception) {
+                                                errorMessage = error.message ?: "Не удалось открыть альбом"
+                                            } finally {
+                                                isLoading = false
                                             }
-                                        } catch (error: Exception) {
-                                            errorMessage = error.message ?: "Не удалось открыть альбом"
-                                        } finally {
-                                            isLoading = false
                                         }
                                     }
                                 }.padding(vertical = 15.dp)
