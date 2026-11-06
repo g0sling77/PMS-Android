@@ -30,6 +30,34 @@ data class MusicTrack(
 
 object NavidromeClient {
     private const val API_VERSION = "1.16.1"
+    private const val DEFAULT_PORT = 4533
+
+    fun normalizeServerAddress(input: String): String {
+        val value = input.trim().trimEnd('/')
+        require(value.isNotBlank()) { "Введите IP-адрес сервера" }
+        val withScheme = if (value.startsWith("http://", true) || value.startsWith("https://", true)) {
+            value
+        } else {
+            "http://$value"
+        }
+        val schemeEnd = withScheme.indexOf("://") + 3
+        val authorityEnd = withScheme.indexOfAny(charArrayOf('/', '?', '#'), startIndex = schemeEnd)
+            .let { if (it == -1) withScheme.length else it }
+        val authority = withScheme.substring(schemeEnd, authorityEnd)
+        require(authority.isNotBlank()) { "Проверьте IP-адрес сервера" }
+        val hasPort = (authority.startsWith("[") && authority.contains("]:")) ||
+            (!authority.startsWith("[") && authority.count { it == ':' } == 1)
+        val normalized = if (hasPort) {
+            withScheme
+        } else if (authority.startsWith("[") && authority.endsWith("]")) {
+            withScheme.substring(0, authorityEnd).replace(authority, "$authority:$DEFAULT_PORT") +
+                withScheme.substring(authorityEnd)
+        } else {
+            withScheme.substring(0, authorityEnd).replace(authority, "$authority:$DEFAULT_PORT") +
+                withScheme.substring(authorityEnd)
+        }
+        return normalized.trimEnd('/')
+    }
 
     fun testConnection(serverAddress: String, username: String, password: String): ServerConnection {
         val response = request(serverAddress, username, password, "ping.view")
@@ -83,10 +111,7 @@ object NavidromeClient {
         method: String,
         parameters: Map<String, String> = emptyMap()
     ): JSONObject {
-        val base = serverAddress.trim().trimEnd('/')
-        require(base.startsWith("http://") || base.startsWith("https://")) {
-            "Адрес должен начинаться с http:// или https://"
-        }
+        val base = normalizeServerAddress(serverAddress)
         require(username.isNotBlank()) { "Введите имя пользователя" }
         require(password.isNotEmpty()) { "Введите пароль" }
 
