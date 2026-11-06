@@ -51,7 +51,7 @@ object NavidromeClient {
             setRequestProperty("Accept", "application/json")
         }
 
-        try {
+        return try {
             val responseCode = connection.responseCode
             val stream = if (responseCode in 200..299) {
                 connection.inputStream
