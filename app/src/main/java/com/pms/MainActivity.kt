@@ -260,7 +260,7 @@ private fun PmsLibraryScreen(
         when {
             showPlayerDetails -> showPlayerDetails = false
             selectedAlbum != null -> selectedAlbum = null
-            librarySection != "MENU" -> librarySection = "MENU"
+            mainTab == "LIBRARY" && librarySection != "MENU" -> librarySection = "MENU"
             tabHistory.isNotEmpty() -> {
                 mainTab = tabHistory.removeAt(tabHistory.lastIndex)
                 selectedAlbum = null
