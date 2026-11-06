@@ -395,19 +395,19 @@ private fun PmsLibraryScreen(
                 else -> when (mainTab) {
                     "RADIO" -> {
                         ScreenHeading("RADIO PMS", "24/7 SHUFFLE STREAM")
-                        Spacer(Modifier.height(36.dp))
-                        SpectrumBars(isPlaying, Modifier.fillMaxWidth().height(155.dp))
-                        Spacer(Modifier.weight(1f))
-                        Column(Modifier.fillMaxWidth().border(1.dp, Color(0xFF34383A), RoundedCornerShape(5.dp)).padding(23.dp)) {
+                        Spacer(Modifier.height(44.dp))
+                        SpectrumBars(isPlaying, Modifier.fillMaxWidth().height(185.dp))
+                        Spacer(Modifier.height(38.dp))
+                        Column(Modifier.fillMaxWidth().border(1.dp, Color(0xFF34383A), RoundedCornerShape(5.dp)).padding(horizontal = 26.dp, vertical = 30.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("NOW PLAYING", color = PmsMuted, fontSize = 11.sp, letterSpacing = 1.8.sp)
                                 Text("SHUFFLE", color = PmsMuted, fontSize = 11.sp, letterSpacing = 1.4.sp)
                             }
-                            Spacer(Modifier.height(22.dp))
-                            Text(currentTrack?.title ?: "PMS RADIO", color = PmsText, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.height(6.dp))
-                            Text(currentTrack?.artist ?: "READY FOR TRANSMISSION", color = PmsMuted, fontSize = 13.sp, letterSpacing = 1.2.sp)
-                            Spacer(Modifier.height(25.dp))
+                            Spacer(Modifier.height(28.dp))
+                            Text(currentTrack?.title ?: "PMS RADIO", color = PmsText, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(9.dp))
+                            Text(currentTrack?.artist ?: "READY FOR TRANSMISSION", color = PmsMuted, fontSize = 15.sp, letterSpacing = 1.5.sp)
+                            Spacer(Modifier.height(34.dp))
                             PlayerControls(isPlaying, { startTrack(currentTrackIndex - 1) }, { if (player.isPlaying) player.pause() else player.play() }, { startTrack(currentTrackIndex + 1) })
                             if (previewMode) {
                                 Spacer(Modifier.height(10.dp))
@@ -545,13 +545,13 @@ private fun IndustrialHeader(onSettings: () -> Unit) {
         Box(Modifier.fillMaxWidth().height(58.dp)) {
             Row(Modifier.align(androidx.compose.ui.Alignment.Center), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Text("≪", color = PmsMuted, fontSize = 31.sp, modifier = Modifier.padding(end = 6.dp))
-                Text("PMS", color = PmsText, fontSize = 46.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
+                Text("PMS", color = PmsText, fontSize = 54.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
                 Text("≫", color = PmsMuted, fontSize = 31.sp, modifier = Modifier.padding(start = 6.dp))
             }
             Text("⚙", color = PmsMuted, fontSize = 25.sp,
                 modifier = Modifier.align(androidx.compose.ui.Alignment.CenterEnd).clickable(onClick = onSettings).padding(5.dp))
         }
-        Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 10.sp, letterSpacing = 2.5.sp,
+        Text("PERSONAL METAL STREAMING", color = PmsMuted, fontSize = 11.sp, letterSpacing = 2.5.sp,
             modifier = Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
@@ -561,7 +561,7 @@ private fun ScreenHeading(title: String, subtitle: String) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             Text("////", color = PmsMuted, fontSize = 17.sp, letterSpacing = 1.sp)
-            Text("  $title  ", color = PmsText, fontSize = 25.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.4.sp)
+            Text("  $title  ", color = PmsText, fontSize = 29.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.4.sp)
             Text("////", color = PmsMuted, fontSize = 17.sp, letterSpacing = 1.sp)
         }
         Spacer(Modifier.height(7.dp))
@@ -577,10 +577,10 @@ private fun PmsDivider() {
 @Composable
 private fun PlayerControls(isPlaying: Boolean, onPrevious: () -> Unit, onToggle: () -> Unit, onNext: () -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-        Text("PREV", color = PmsMuted, fontSize = 9.sp, modifier = Modifier.clickable(onClick = onPrevious).padding(12.dp))
-        Text(if (isPlaying) "Ⅱ" else "▶", color = PmsText, fontSize = 34.sp,
+        Text("PREV", color = PmsMuted, fontSize = 11.sp, modifier = Modifier.clickable(onClick = onPrevious).padding(16.dp))
+        Text(if (isPlaying) "Ⅱ" else "▶", color = PmsText, fontSize = 42.sp,
             modifier = Modifier.clickable(onClick = onToggle).padding(horizontal = 24.dp, vertical = 4.dp))
-        Text("NEXT", color = PmsMuted, fontSize = 9.sp, modifier = Modifier.clickable(onClick = onNext).padding(12.dp))
+        Text("NEXT", color = PmsMuted, fontSize = 11.sp, modifier = Modifier.clickable(onClick = onNext).padding(16.dp))
     }
 }
 
